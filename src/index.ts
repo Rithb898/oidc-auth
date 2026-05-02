@@ -8,6 +8,8 @@ import JWT from "jsonwebtoken";
 import { PRIVATE_KEY, PUBLIC_KEY } from './utils/cert.js';
 import { db } from './lib/db.js';
 import type { JWTClaims } from './utils/user-token.js';
+import { applicationsRouter } from './routes/applications.js';
+import { oauthRouter } from './routes/oauth.js';
 
 const app = express()
 const PORT = process.env.PORT || 5555
@@ -29,8 +31,13 @@ app.get("/.well-known/openid-configuration", (req, res) => {
   return res.json({
     issuer,
     authorization_endpoint: `${issuer}/o/authenticate`,
+    token_endpoint: `${issuer}/o/token`,
     userinfo_endpoint: `${issuer}/o/userinfo`,
-    jwks_uri: `${issuer}/.well-known/jwks.json`
+    jwks_uri: `${issuer}/.well-known/jwks.json`,
+    response_types_supported: ["code"],
+    grant_types_supported: ["authorization_code"],
+    scopes_supported: ["openid", "profile", "email"],
+    token_endpoint_auth_methods_supported: ["client_secret_post"]
   })
 })
 
@@ -39,51 +46,8 @@ app.get("/.well-known/jwks.json", async (req, res) => {
   return res.json({ keys: [key.toJSON()] });
 })
 
-app.get("/o/authenticate", (req, res) => {
-  return res.sendFile(path.resolve("public", "authenticate.html"));
-});
-
-app.post("/o/authenticate/sign-in", async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password are required" });
-  }
-
-  const user = await db.user.findUnique({ where: { email } });
-
-  if (!user || !user.password || !user.salt) {
-    return res.status(401).json({ error: "Invalid email or password" });
-  }
-
-  const hash = crypto
-    .createHash("sha256")
-    .update(password + user.salt)
-    .digest("hex");
-
-  if (hash !== user.password) {
-    res.status(401).json({ message: "Invalid email or password." });
-    return;
-  }
-
-  const issuer = `${req.protocol}://${req.get('host')}`;
-  const now = Math.floor(Date.now() / 1000);
-
-  const claims = {
-    iss: issuer,
-    sub: user.id,
-    email: user.email,
-    email_verified: String(user.emailVerified),
-    exp: now + 60 * 60, // Token expires in 1 hour
-    given_name: user.firstName ?? "",
-    family_name: user.lastName ?? undefined,
-    name: [user.firstName, user.lastName].filter(Boolean).join(" "),
-    picture: user.profileImageURL ?? undefined,
-  }
-
-  const token = JWT.sign(claims, PRIVATE_KEY, { algorithm: "RS256" });
-  res.json({ token });
-})
+app.use("/o", oauthRouter);
+app.use("/applications", applicationsRouter);
 
 app.post("/o/authenticate/sign-up", async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
