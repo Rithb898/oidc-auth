@@ -1,7 +1,13 @@
-import express from 'express';
 import path from 'node:path';
+import crypto from "node:crypto";
+
+import express from 'express';
 import jose from "node-jose";
-import { PUBLIC_KEY } from './utils/cert.js';
+import JWT from "jsonwebtoken";
+
+import { PRIVATE_KEY, PUBLIC_KEY } from './utils/cert.js';
+import { db } from './lib/db.js';
+import type { JWTClaims } from './utils/user-token.js';
 
 const app = express()
 const PORT = process.env.PORT || 5555
@@ -15,10 +21,6 @@ app.get("/", (req, res) => {
 
 app.get("/health", (req, res) => {
   res.json({ status: "Server is healthy", healthy: true })
-})
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`)
 })
 
 // OIDC Endpoints
@@ -37,3 +39,128 @@ app.get("/.well-known/jwks.json", async (req, res) => {
   return res.json({ keys: [key.toJSON()] });
 })
 
+app.get("/o/authenticate", (req, res) => {
+  return res.sendFile(path.resolve("public", "authenticate.html"));
+});
+
+app.post("/o/authenticate/sign-in", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+
+  const user = await db.user.findUnique({ where: { email } });
+
+  if (!user || !user.password || !user.salt) {
+    return res.status(401).json({ error: "Invalid email or password" });
+  }
+
+  const hash = crypto
+    .createHash("sha256")
+    .update(password + user.salt)
+    .digest("hex");
+
+  if (hash !== user.password) {
+    res.status(401).json({ message: "Invalid email or password." });
+    return;
+  }
+
+  const issuer = `${req.protocol}://${req.get('host')}`;
+  const now = Math.floor(Date.now() / 1000);
+
+  const claims = {
+    iss: issuer,
+    sub: user.id,
+    email: user.email,
+    email_verified: String(user.emailVerified),
+    exp: now + 60 * 60, // Token expires in 1 hour
+    given_name: user.firstName ?? "",
+    family_name: user.lastName ?? undefined,
+    name: [user.firstName, user.lastName].filter(Boolean).join(" "),
+    picture: user.profileImageURL ?? undefined,
+  }
+
+  const token = JWT.sign(claims, PRIVATE_KEY, { algorithm: "RS256" });
+  res.json({ token });
+})
+
+app.post("/o/authenticate/sign-up", async (req, res) => {
+  const { firstName, lastName, email, password } = req.body;
+
+  if (!email || !password || !firstName) {
+    res
+      .status(400)
+      .json({ message: "First name, email, and password are required." });
+    return;
+  }
+
+  const existingUser = await db.user.findUnique({ where: { email } });
+
+  if (existingUser) {
+    res.status(400).json({ message: "Email is already in use." });
+    return;
+  }
+
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto
+    .createHash("sha256")
+    .update(password + salt)
+    .digest("hex");
+
+  await db.user.create({
+    data: {
+      firstName,
+      lastName: lastName ?? null,
+      email,
+      password: hash,
+      salt,
+    }
+  })
+
+  res.status(201).json({ ok: true });
+})
+
+app.get("/o/userinfo", async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    res
+      .status(401)
+      .json({ message: "Missing or invalid Authorization header." });
+    return;
+  }
+
+  const token = authHeader.slice(7);
+
+  let claims: JWTClaims;
+  try {
+    claims = JWT.verify(token, PUBLIC_KEY, {
+      algorithms: ["RS256"],
+    }) as JWTClaims;
+  } catch {
+    res.status(401).json({ message: "Invalid or expired token." });
+    return;
+  }
+
+  const user = await db.user.findUnique({ where: { id: claims.sub } });
+
+  if (!user) {
+    res.status(404).json({ message: "User not found." });
+    return;
+  }
+
+  res.json({
+    sub: user.id,
+    email: user.email,
+    email_verified: user.emailVerified,
+    given_name: user.firstName,
+    family_name: user.lastName,
+    name: [user.firstName, user.lastName].filter(Boolean).join(" "),
+    picture: user.profileImageURL,
+  });
+})
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`)
+})
