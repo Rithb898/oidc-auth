@@ -16,14 +16,25 @@ import {
 const router: RouterType = Router();
 
 router.get("/authenticate", async (req, res) => {
-  const { client_id, redirect_uri, scope, state, response_type, code_challenge, code_challenge_method } =
-    req.query as Record<string, string>;
+  const {
+    client_id,
+    redirect_uri,
+    scope,
+    state,
+    response_type,
+    code_challenge,
+    code_challenge_method,
+  } = req.query as Record<string, string>;
 
   if (response_type && response_type !== "code") {
     return res.status(400).json({ error: "Unsupported response_type" });
   }
 
-  if (code_challenge_method && code_challenge_method !== "S256" && code_challenge_method !== "plain") {
+  if (
+    code_challenge_method &&
+    code_challenge_method !== "S256" &&
+    code_challenge_method !== "plain"
+  ) {
     return res.status(400).json({ error: "Invalid code_challenge_method" });
   }
 
@@ -85,7 +96,16 @@ router.get("/authenticate", async (req, res) => {
 });
 
 router.post("/authenticate/sign-in", async (req, res) => {
-  const { email, password, client_id, redirect_uri, scope, state, code_challenge, code_challenge_method } = req.body;
+  const {
+    email,
+    password,
+    client_id,
+    redirect_uri,
+    scope,
+    state,
+    code_challenge,
+    code_challenge_method,
+  } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });
@@ -166,7 +186,16 @@ router.post("/authenticate/sign-in", async (req, res) => {
 });
 
 router.post("/token", async (req, res) => {
-  const { grant_type, code, client_id, client_secret, redirect_uri, refresh_token, code_verifier } = req.body;
+  const {
+    grant_type,
+    code,
+    client_id,
+    client_secret,
+    redirect_uri,
+    refresh_token,
+    code_verifier,
+  } = req.body;
+  if (!grant_type) return res.status(400).json({ error: "invalid_request" });
 
   if (grant_type === "refresh_token") {
     if (!refresh_token || !client_id) {
@@ -294,14 +323,24 @@ router.post("/token", async (req, res) => {
 
   if (authCode.codeChallenge) {
     if (!code_verifier) {
-      return res.status(400).json({ error: "invalid_grant", error_description: "code_verifier required" });
+      return res
+        .status(400)
+        .json({
+          error: "invalid_grant",
+          error_description: "code_verifier required",
+        });
     }
 
     const method = (authCode.codeChallengeMethod as "S256" | "plain") || "S256";
     const computedChallenge = computeCodeChallenge(code_verifier, method);
 
     if (computedChallenge !== authCode.codeChallenge) {
-      return res.status(400).json({ error: "invalid_grant", error_description: "PKCE verification failed" });
+      return res
+        .status(400)
+        .json({
+          error: "invalid_grant",
+          error_description: "PKCE verification failed",
+        });
     }
   }
 
