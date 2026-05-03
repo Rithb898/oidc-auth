@@ -8,7 +8,7 @@ FROM base AS builder
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 
@@ -18,11 +18,10 @@ COPY backend ./backend
 COPY frontend ./frontend
 
 WORKDIR /app/frontend
-RUN pnpm build
+RUN pnpm install --frozen-lockfile && pnpm build
 
 WORKDIR /app/backend
-RUN pnpm prisma generate
-RUN pnpm build
+RUN pnpm install --frozen-lockfile && pnpm prisma generate && pnpm build
 
 FROM base AS runner
 

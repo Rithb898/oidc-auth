@@ -8,7 +8,7 @@ FROM base AS builder
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 COPY frontend/package.json ./frontend/
 
 RUN pnpm install --frozen-lockfile
@@ -16,7 +16,7 @@ RUN pnpm install --frozen-lockfile
 COPY frontend ./frontend
 
 WORKDIR /app/frontend
-RUN pnpm build
+RUN pnpm install --frozen-lockfile && pnpm build
 
 FROM nginx:alpine
 
