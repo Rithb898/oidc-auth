@@ -35,7 +35,7 @@ COPY --from=builder /app/backend/public ./public
 COPY --from=builder /app/backend/node_modules ./node_modules
 COPY --from=builder /app/backend/package.json ./
 COPY --from=builder /app/backend/src/prisma/generated ./src/prisma/generated
-COPY backend/cert ./cert
+COPY --from=builder /app/backend/cert ./cert
 
 USER oidc
 
