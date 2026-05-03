@@ -11,6 +11,9 @@ export function AuthCard({ title, children }: AuthCardProps) {
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">OIDC Auth</h1>
+          <a href="/docs" className="text-sm text-gray-500 hover:text-gray-700 mt-1 inline-block">
+            Developer Docs
+          </a>
         </div>
         <Card>
           <CardHeader>

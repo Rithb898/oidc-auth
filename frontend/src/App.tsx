@@ -7,9 +7,11 @@ import { ForgotPassword } from "@/pages/ForgotPassword";
 import { ResetPassword } from "@/pages/ResetPassword";
 import { ApplicationList } from "@/pages/applications/List";
 import { ApplicationForm } from "@/pages/applications/Form";
+import { Docs } from "@/pages/Docs";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const router = createBrowserRouter([
+  { path: "/docs", element: <Docs /> },
   { path: "/o/authenticate", element: <SignIn /> },
   { path: "/signup", element: <SignUp /> },
   { path: "/o/verify-email", element: <VerifyEmail /> },

@@ -1,0 +1,32 @@
+services:
+  oidc-auth:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: oidc-auth-server
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      - NODE_ENV=production
+      - PORT=5555
+      - DATABASE_URL=${DATABASE_URL}
+      - APP_URL=${APP_URL}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL}
+    volumes:
+      - ./backend/cert:/app/cert:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:5555/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
