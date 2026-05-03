@@ -1,10 +1,4 @@
 {
   "buildCommand": "pnpm --prefix frontend build",
-  "outputDirectory": "backend/public",
-  "experimentalServices": {
-    "backend": {
-      "entrypoint": "backend",
-      "routePrefix": "/_/backend"
-    }
-  }
+  "outputDirectory": "backend/public"
 }
