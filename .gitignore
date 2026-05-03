@@ -143,11 +143,11 @@ vite.config.ts.timestamp-*
 .vite/
 
 /src/prisma/generated
+/public
 
 # keep graph outputs, skip heavy/local-only files
 
 # optional: commit for shared extraction speed, skip to keep repo small
 graphify-out
 .opencode
-.kilo
 AGENTS.md
