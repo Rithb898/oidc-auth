@@ -5,8 +5,6 @@ services:
       dockerfile: frontend/Dockerfile
     container_name: oidc-auth-frontend
     restart: unless-stopped
-    ports:
-      - "3000:3000"
 
   backend:
     build:
@@ -14,8 +12,6 @@ services:
       dockerfile: backend/Dockerfile
     container_name: oidc-auth-backend
     restart: unless-stopped
-    ports:
-      - "5555:5555"
     environment:
       - NODE_ENV=production
       - PORT=5555
