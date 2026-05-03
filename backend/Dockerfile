@@ -17,6 +17,8 @@ RUN pnpm install --frozen-lockfile
 COPY backend ./backend
 COPY frontend ./frontend
 
+RUN ls -la /app/backend/cert/
+
 WORKDIR /app/frontend
 RUN pnpm install --frozen-lockfile && pnpm build
 
@@ -36,6 +38,8 @@ COPY --from=builder /app/backend/node_modules ./node_modules
 COPY --from=builder /app/backend/package.json ./
 COPY --from=builder /app/backend/src/prisma/generated ./src/prisma/generated
 COPY --from=builder /app/backend/cert ./cert
+
+RUN chmod 644 ./cert/private-key.pem ./cert/public-key.pub
 
 USER oidc
 

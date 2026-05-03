@@ -1,11 +1,4 @@
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    container_name: oidc-auth-frontend
-    restart: unless-stopped
-
   backend:
     build:
       context: .
@@ -19,8 +12,6 @@ services:
       - APP_URL=${APP_URL}
       - RESEND_API_KEY=${RESEND_API_KEY}
       - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL}
-    volumes:
-      - ./backend/cert:/app/cert:ro
     healthcheck:
       test:
         [
