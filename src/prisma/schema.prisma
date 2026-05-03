@@ -51,15 +51,17 @@ model OAuthApplication {
 }
 
 model AuthCode {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  clientId    String
-  userId      String
-  redirectUri String
-  scope       String
-  expiresAt   DateTime
-  used        Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id                 String   @id @default(uuid())
+  code               String   @unique
+  clientId           String
+  userId             String
+  redirectUri        String
+  scope              String
+  codeChallenge      String?
+  codeChallengeMethod String?
+  expiresAt          DateTime
+  used               Boolean  @default(false)
+  createdAt          DateTime @default(now())
 
   application OAuthApplication @relation(fields: [clientId], references: [clientId])
   user        User             @relation(fields: [userId], references: [id])
