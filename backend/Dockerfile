@@ -35,8 +35,7 @@ COPY --from=builder /app/backend/public ./public
 COPY --from=builder /app/backend/node_modules ./node_modules
 COPY --from=builder /app/backend/package.json ./
 COPY --from=builder /app/backend/src/prisma/generated ./src/prisma/generated
-
-RUN mkdir -p cert && chown -R oidc:nodejs /app
+COPY backend/cert ./cert
 
 USER oidc
 
