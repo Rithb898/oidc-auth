@@ -20,6 +20,7 @@ const PORT = process.env.PORT || 5555;
 
 app.use(express.json());
 app.use(cors({ origin: "*", credentials: true }));
+app.set("trust proxy", 1); // add near app setup
 app.use(express.static(path.resolve("public")));
 
 app.get("/", (req, res) => {

@@ -1,4 +1,0 @@
-{
-  "buildCommand": "pnpm --prefix frontend build",
-  "outputDirectory": "backend/public"
-}
